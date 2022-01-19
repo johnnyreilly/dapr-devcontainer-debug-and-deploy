@@ -1,0 +1,69 @@
+version: '3.4'
+
+services:
+
+  weatherservice:
+    image: ${REGISTRY:-weatherservice}:${TAG:-latest}
+    build:
+      context: ./WeatherService
+      dockerfile: Dockerfile
+    ports:
+      - "50000:50000" # Dapr instances communicate over gRPC so we need to expose the gRPC port
+    environment:
+      DOTNET_ENVIRONMENT: 'Development'
+      ASPNETCORE_URLS: 'http://+:5000'
+      DAPR_HTTP_PORT: 3500
+      DAPR_GRPC_PORT: 50000
+      DAPR_METRICS_PORT: 9090
+
+  weatherservice-dapr:
+    image: "daprio/daprd:latest"
+    command: [
+      "./daprd",
+      "-app-id", "dotnet-app",
+      "-app-port", "5000",
+      "-dapr-http-port", "3500",
+      "-placement-host-address", "placement:50006" # Dapr's placement service can be reach via the docker DNS entry
+    ]
+    network_mode: "service:weatherservice"
+    depends_on:
+      - weatherservice
+
+  webservice:
+    image: ${REGISTRY:-webservice}:${TAG:-latest}
+    ports:
+      - "3000:3000"
+      - "50001:50001" # Dapr instances communicate over gRPC so we need to expose the gRPC port
+    build:
+      context: ./WebService
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: 'development'
+      PORT: '3000'
+      DAPR_HTTP_PORT: 3501
+      DAPR_GRPC_PORT: 50001
+      DAPR_METRICS_PORT: 9091
+      WEATHER_SERVICE_NAME: 'dotnet-app'
+
+  webservice-dapr:
+    image: "daprio/daprd:latest"
+    command: [
+      "./daprd",
+      "-app-id", "node-app",
+      "-app-port", "3000",
+      "-dapr-http-port", "3501",
+      "-placement-host-address", "placement:50006" # Dapr's placement service can be reach via the docker DNS entry
+    ]
+    network_mode: "service:webservice"
+    depends_on:
+      - webservice
+
+  dapr-placement:
+    image: "daprio/dapr:latest"
+    command: ["./placement", "-port", "50006"]
+    ports:
+      - "50006:50006"
+
+# dotnet dev-certs https --trust
+# cd WeatherService && dapr run --app-id dotnet-app --app-port 5000 --dapr-http-port 3501 -- dotnet run
+# cd WebService && dapr run --app-id node-app --app-port 3000 --dapr-http-port 3500 -- node ./dist/index.js
