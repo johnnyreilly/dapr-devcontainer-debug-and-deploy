@@ -25,7 +25,7 @@ var environmentName = '${branch}-env'
 var workspaceName = '${branch}-log-analytics'
 var appInsightsName = '${branch}-app-insights'
 var webServiceContainerAppName = '${branch}-web'
-var weatherServiceContainerAppName = '${branch}-mailer'
+var weatherServiceContainerAppName = '${branch}-weather'
 
 var containerRegistryPasswordRef = 'container-registry-password'
 
