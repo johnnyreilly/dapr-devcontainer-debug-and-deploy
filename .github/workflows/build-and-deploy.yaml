@@ -123,7 +123,7 @@ jobs:
               --name "$DEPLOYMENT_NAME" \
               --template-file ./infra/main.bicep \
               --parameters \
-                  branchName='${{ github.ref }}' \
+                  branchName='${{ github.event.number == 0 && 'main' ||  format('pr-{0}', github.event.number) }}' \
                   webServiceImage='${{ needs.build.outputs.image-node }}' \
                   webServicePort=3000 \
                   webServiceIsExternalIngress=true \
