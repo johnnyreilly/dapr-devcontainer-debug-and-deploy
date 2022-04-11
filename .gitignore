@@ -106,3 +106,5 @@ dist
 # dotnet
 bin
 obj
+
+devcontainer.env

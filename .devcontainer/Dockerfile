@@ -1,7 +1,7 @@
 # [Choice] .NET version: 6.0, 5.0, 3.1, 2.1
 ARG VARIANT=3.1
 FROM mcr.microsoft.com/vscode/devcontainers/dotnet:0-${VARIANT}
-RUN su vscode -c "umask 0002 && dotnet tool install -g Microsoft.Tye --version \"0.10.0-alpha.21420.1\" 2>&1"
+RUN su vscode -c "umask 0002 && dotnet tool install --global Microsoft.Tye --version 0.11.0-alpha.22111.1 2>&1"
 
 # [Choice] Node.js version: none, lts/*, 16, 14, 12, 10
 ARG NODE_VERSION="14"
