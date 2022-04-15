@@ -2,8 +2,8 @@ using Config;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.Configure<PositionOptions>(
-    builder.Configuration.GetSection(PositionOptions.Position));
+builder.Services.Configure<MailConfig>(
+    builder.Configuration.GetSection("Mail"));
     
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

@@ -1,9 +1,8 @@
 namespace Config;
 
-public class PositionOptions
+public class MailConfig
 {
-    public const string Position = "Position";
-
     public string Title { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string MailgunApiKey { get; set; } = string.Empty;
 }
