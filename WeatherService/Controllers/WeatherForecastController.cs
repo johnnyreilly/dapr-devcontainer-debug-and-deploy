@@ -9,7 +9,6 @@ using RestSharp.Authenticators;
 namespace WeatherService.Controllers;
 
 [ApiController]
-[Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
     private static readonly string[] Summaries = new[]
@@ -31,8 +30,8 @@ public class WeatherForecastController : ControllerBase
     
     public record SendWeatherForecastBody(string Email);
 
-    [HttpPost(Name = "SendWeatherForecast")]
-    public async Task<string> Post(SendWeatherForecastBody body)
+    [HttpPost("SendWeatherForecast")]
+    public async Task<string> SendWeatherForecast(SendWeatherForecastBody body)
     {
         try
         {

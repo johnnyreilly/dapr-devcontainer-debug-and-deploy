@@ -47,7 +47,7 @@ router.get('/', async (ctx, next) => {
 router.post('/', koaBody(), async (ctx, next) => {
     try {
         if (ctx.request.body.email) {
-            await axios.post(`${daprSidecarBaseUrl}/weatherForecast`, {
+            await axios.post(`${daprSidecarBaseUrl}/SendWeatherForecast`, {
                 email: ctx.request.body.email
             }, {
                 headers: weatherServiceAppIdHeaders
