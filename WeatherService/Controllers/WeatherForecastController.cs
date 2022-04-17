@@ -42,7 +42,7 @@ public class WeatherForecastController : ControllerBase
             {
                 Date = DateTime.Now.AddDays(index),
                 TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = _options.Name + _options.Title + Summaries[Random.Shared.Next(Summaries.Length)]
+                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
 
@@ -82,7 +82,7 @@ public class WeatherForecastController : ControllerBase
         request.Resource = "{domain}/messages";
         request.AddParameter("from", "John Reilly <johnny_reilly@hotmail.com>");
         request.AddParameter("to", toEmailAddress);
-        request.AddParameter("subject", "Hello");
+        request.AddParameter("subject", "Weather forecast");
         request.AddParameter("text", text);
 
         return await client.PostAsync(request);
