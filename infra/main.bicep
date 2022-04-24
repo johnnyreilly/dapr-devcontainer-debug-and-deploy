@@ -24,7 +24,7 @@ var maxReplicas = 1
 
 var branch = toLower(last(split(branchName, '/')))
 
-var environmentName = '${branch}-env'
+var environmentName = 'shared-env'
 var workspaceName = '${branch}-log-analytics'
 var appInsightsName = '${branch}-app-insights'
 var webServiceContainerAppName = '${branch}-web'
@@ -57,7 +57,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource environment 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
+resource environment 'Microsoft.Web/kubeEnvironments@2021-03-01' = {
   name: environmentName
   kind: 'containerenvironment'
   location: location
