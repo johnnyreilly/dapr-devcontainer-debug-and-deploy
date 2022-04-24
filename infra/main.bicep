@@ -78,7 +78,7 @@ resource environment 'Microsoft.Web/kubeEnvironments@2021-03-01' = {
   }
 }
 
-resource weatherServiceContainerApp 'Microsoft.Web/containerapps@2021-03-01' = {
+resource weatherServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
   name: weatherServiceContainerAppName
   kind: 'containerapps'
   tags: tags
@@ -135,7 +135,7 @@ resource weatherServiceContainerApp 'Microsoft.Web/containerapps@2021-03-01' = {
   }
 }
 
-resource webServiceContainerApp 'Microsoft.Web/containerapps@2021-03-01' = {
+resource webServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
   name: webServiceContainerAppName
   kind: 'containerapps'
   tags: tags
