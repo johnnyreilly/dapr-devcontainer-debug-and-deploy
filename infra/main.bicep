@@ -57,7 +57,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-resource environment 'Microsoft.Web/kubeEnvironments@2021-03-01' = {
+resource environment 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
   name: environmentName
   kind: 'containerenvironment'
   location: location
