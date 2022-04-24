@@ -15,7 +15,10 @@ param containerRegistryPassword string
 
 param tags object
 
-var location = resourceGroup().location
+@secure()
+param MAIL__MAILGUNAPIKEY string
+
+param location string = resourceGroup().location
 var minReplicas = 0
 var maxReplicas = 1
 
@@ -28,8 +31,9 @@ var webServiceContainerAppName = '${branch}-web'
 var weatherServiceContainerAppName = '${branch}-weather'
 
 var containerRegistryPasswordRef = 'container-registry-password'
+var mailgunApiKeyRef = 'mailgun-api-key'
 
-resource workspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
+resource workspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   name: workspaceName
   location: location
   tags: tags
@@ -42,7 +46,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
   }
 }
 
-resource appInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
   tags: tags
@@ -53,7 +57,7 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
   }
 }
 
-resource environment 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
+resource environment 'Microsoft.Web/kubeEnvironments@2021-03-01' = {
   name: environmentName
   kind: 'containerenvironment'
   location: location
@@ -87,6 +91,10 @@ resource weatherServiceContainerApp 'Microsoft.Web/containerapps@2021-03-01' = {
           name: containerRegistryPasswordRef
           value: containerRegistryPassword
         }
+        {
+          name: mailgunApiKeyRef
+          value: MAIL__MAILGUNAPIKEY
+        }
       ]
       registries: [
         {
@@ -106,6 +114,12 @@ resource weatherServiceContainerApp 'Microsoft.Web/containerapps@2021-03-01' = {
           image: weatherServiceImage
           name: weatherServiceContainerAppName
           transport: 'auto'
+          env: [
+            {
+              name: 'MAIL__MAILGUNAPIKEY'
+              secretRef: mailgunApiKeyRef
+            }
+          ]
         }
       ]
       scale: {
