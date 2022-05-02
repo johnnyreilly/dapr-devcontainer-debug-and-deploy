@@ -15,13 +15,14 @@ param containerRegistryPassword string
 
 param tags object
 
-var location = resourceGroup().location
+param location string = resourceGroup().location
+
 var minReplicas = 0
 var maxReplicas = 1
 
 var branch = toLower(last(split(branchName, '/')))
 
-var environmentName = '${branch}-env'
+var environmentName = 'shared-env'
 var workspaceName = '${branch}-log-analytics'
 var appInsightsName = '${branch}-app-insights'
 var webServiceContainerAppName = '${branch}-web'
@@ -29,7 +30,7 @@ var weatherServiceContainerAppName = '${branch}-weather'
 
 var containerRegistryPasswordRef = 'container-registry-password'
 
-resource workspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
+resource workspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   name: workspaceName
   location: location
   tags: tags
@@ -42,7 +43,7 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' = {
   }
 }
 
-resource appInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
   tags: tags
@@ -53,14 +54,12 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
   }
 }
 
-resource environment 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
+resource environment 'Microsoft.App/managedEnvironments@2022-01-01-preview' = {
   name: environmentName
-  kind: 'containerenvironment'
   location: location
   tags: tags
   properties: {
-    type: 'managed'
-    internalLoadBalancerEnabled: false
+    daprAIInstrumentationKey: appInsights.properties.InstrumentationKey
     appLogsConfiguration: {
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
@@ -68,20 +67,22 @@ resource environment 'Microsoft.Web/kubeEnvironments@2021-02-01' = {
         sharedKey: listKeys(workspace.id, workspace.apiVersion).primarySharedKey
       }
     }
-    containerAppsConfiguration: {
-      daprAIInstrumentationKey: appInsights.properties.InstrumentationKey
-    }
   }
 }
 
-resource weatherServiceContainerApp 'Microsoft.Web/containerapps@2021-03-01' = {
+resource weatherServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
   name: weatherServiceContainerAppName
   kind: 'containerapps'
   tags: tags
   location: location
   properties: {
-    kubeEnvironmentId: environment.id
+    managedEnvironmentId: environment.id
     configuration: {
+      dapr: {
+        enabled: true
+        appPort: weatherServicePort
+        appId: weatherServiceContainerAppName
+      }
       secrets: [
         {
           name: containerRegistryPasswordRef
@@ -112,23 +113,23 @@ resource weatherServiceContainerApp 'Microsoft.Web/containerapps@2021-03-01' = {
         minReplicas: minReplicas
         maxReplicas: maxReplicas
       }
-      dapr: {
-        enabled: true
-        appPort: weatherServicePort
-        appId: weatherServiceContainerAppName
-      }
     }
   }
 }
 
-resource webServiceContainerApp 'Microsoft.Web/containerapps@2021-03-01' = {
+resource webServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
   name: webServiceContainerAppName
   kind: 'containerapps'
   tags: tags
   location: location
   properties: {
-    kubeEnvironmentId: environment.id
+    managedEnvironmentId: environment.id
     configuration: {
+      dapr: {
+        enabled: true
+        appPort: webServicePort
+        appId: webServiceContainerAppName
+      }
       secrets: [
         {
           name: containerRegistryPasswordRef
@@ -164,11 +165,6 @@ resource webServiceContainerApp 'Microsoft.Web/containerapps@2021-03-01' = {
       scale: {
         minReplicas: minReplicas
         maxReplicas: maxReplicas
-      }
-      dapr: {
-        enabled: true
-        appPort: webServicePort
-        appId: webServiceContainerAppName
       }
     }
   }
