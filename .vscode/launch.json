@@ -23,7 +23,7 @@
             "postDebugTask": "daprd-down-dotnet",
             "program": "${workspaceFolder}/WeatherService/bin/Debug/net6.0/WeatherService.dll",
             "args": [],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/WeatherService",
             "stopAtEntry": false,
             "env": {
                 "DOTNET_ENVIRONMENT": "Development",
@@ -41,7 +41,7 @@
             "preLaunchTask": "daprd-debug-node",
             "postDebugTask": "daprd-down-node",
             "program": "${workspaceFolder}/WebService/index.ts",
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/WebService",
             "env": {
                 "NODE_ENV": "development",
                 "PORT": "3000",
