@@ -1,14 +1,13 @@
 import Koa from 'koa';
 import Router from '@koa/router';
 import koaBody from 'koa-body';
-import axios from 'axios';
 
-// How we connect to the dotnet service with dapr
-const daprSidecarBaseUrl = `http://localhost:${process.env.DAPR_HTTP_PORT || 3501}`
-// app id header for service discovery
-const weatherServiceAppIdHeaders = {
-    'dapr-app-id': process.env.WEATHER_SERVICE_NAME || 'dotnet-app'
-};
+import { DaprClient } from "dapr-client";
+
+const daprHost = "localhost"; // Dapr Sidecar Host
+const daprPort = `${process.env.DAPR_HTTP_PORT || 3501}`; // Dapr Sidecar Port
+
+const client = new DaprClient(daprHost, daprPort);
 
 const app = new Koa();
 const router = new Router();
@@ -47,13 +46,15 @@ router.get('/', async (ctx, next) => {
 router.post('/', koaBody(), async (ctx, next) => {
     try {
         if (ctx.request.body.email) {
-            await axios.post(`${daprSidecarBaseUrl}/SendWeatherForecast`, {
-                email: ctx.request.body.email
-            }, {
-                headers: weatherServiceAppIdHeaders
-            });
+            // Send a message
+            const sent = await client.pubsub.publish(
+                /* pubSubName */ "weather-forecast-pub-sub",
+                /* topic */ "weather-forecasts",
+                /* data */ {
+                    email: ctx.request.body.email
+                });
 
-            ctx.body = formHtml("Message sent");
+            ctx.body = formHtml(`Message sent: ${sent}`);
         } else {
             ctx.body = formHtml("No email supplied");
         }

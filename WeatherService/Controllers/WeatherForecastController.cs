@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 using RestSharp;
 using RestSharp.Authenticators;
 
+using Dapr;
+
 namespace WeatherService.Controllers;
 
 [ApiController]
@@ -27,11 +29,12 @@ public class WeatherForecastController : ControllerBase
         _logger = logger;
         _options = options.Value;
     }
-    
-    public record SendWeatherForecastBody(string Email);
 
+    public record SendWeatherForecastBody(string? Email);
+
+    [Topic(pubsubName: "weather-forecast-pub-sub", name: "weather-forecasts")]
     [HttpPost("SendWeatherForecast")]
-    public async Task<string> SendWeatherForecast(SendWeatherForecastBody body)
+    public async Task<ActionResult<string>> SendWeatherForecast(SendWeatherForecastBody body)
     {
         try
         {
@@ -56,13 +59,13 @@ public class WeatherForecastController : ControllerBase
                 text: text
             );
 
-            return $"We have mailed {toEmailAddress} with the following:\n\n{text}";
+            return Ok($"We have mailed {toEmailAddress} with the following:\n\n{text})");
         }
         catch (Exception exc)
         {
             _logger.LogError(exc, $"Problem!");
             
-            return exc.Message;
+            return BadRequest(exc.Message);
         }
     }
 
