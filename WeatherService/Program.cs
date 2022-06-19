@@ -1,4 +1,5 @@
 using Config;
+using WeatherService.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,19 +24,14 @@ app.UseAuthorization();
 app.UseCloudEvents();
 
 app.MapSubscribeHandler(); // This is the Dapr subscribe handler
-app.MapControllers();
+// app.MapControllers();
 
+app.MapWeatherForecastEndpoints();
 
-/*
-app.UseRouting();
-
-app.UseCloudEvents();
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapSubscribeHandler(); // This is the Dapr subscribe handler
-    endpoints.MapControllers();
-});
-*/
+// Dapr subscription in [Topic] routes orders topic to this route
+// app.MapPost("/orders", [Dapr.Topic("weather-forecast-pub-sub", "weather-forecasts")] (WeatherService.Controllers.WeatherForecastController.SendWeatherForecastBody order) => {
+//     Console.WriteLine("Subscriber received : " + order);
+//     return Results.Ok(order);
+// });
 
 app.Run();
