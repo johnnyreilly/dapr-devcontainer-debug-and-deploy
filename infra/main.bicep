@@ -170,6 +170,7 @@ resource environment 'Microsoft.App/managedEnvironments@2022-01-01-preview' = {
         webServiceContainerAppName
       ]
     }
+  }
 }
 
 resource weatherServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
