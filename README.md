@@ -2,4 +2,4 @@
 
 This repo is the code demonstrated in this blog post:
 
-https://blog.johnnyreilly.com/2022/01/22/azure-container-apps-dapr-bicep-github-actions-debug-devcontainer
+https://blog.johnnyreilly.com/2022/06/21/azure-container-apps-pubsub

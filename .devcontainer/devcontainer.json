@@ -12,7 +12,7 @@
 			"INSTALL_AZURE_CLI": "true"
 		}
 	},
-	"runArgs": ["--init", "--privileged"],
+	"runArgs": ["--init", "--privileged", "--env-file", ".devcontainer/devcontainer.env"],
 	"mounts": ["source=dind-var-lib-docker,target=/var/lib/docker,type=volume"],
 	"overrideCommand": false,
 

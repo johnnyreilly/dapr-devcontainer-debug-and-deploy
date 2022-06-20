@@ -1,7 +1,10 @@
 version: '3.4'
 
+# https://stackoverflow.com/questions/67629176/how-to-set-up-dapr-and-docker-compose-with-state-management
 services:
-
+  ############################
+  # WeatherService + Dapr sidecar
+  ############################
   weatherservice:
     image: ${REGISTRY:-weatherservice}:${TAG:-latest}
     build:
@@ -15,20 +18,33 @@ services:
       DAPR_HTTP_PORT: 3500
       DAPR_GRPC_PORT: 50000
       DAPR_METRICS_PORT: 9090
+    env_file:
+      - ./.devcontainer/devcontainer.env
+    depends_on:
+      - redis
+    networks:
+      - hello-dapr
 
   weatherservice-dapr:
     image: "daprio/daprd:latest"
+    volumes:
+      - ./components-compose:/components
     command: [
       "./daprd",
       "-app-id", "dotnet-app",
       "-app-port", "5000",
       "-dapr-http-port", "3500",
+      "-components-path", "./components",
       "-placement-host-address", "placement:50006" # Dapr's placement service can be reach via the docker DNS entry
     ]
     network_mode: "service:weatherservice"
     depends_on:
       - weatherservice
+      - redis
 
+  ############################
+  # WebService + Dapr sidecar
+  ############################
   webservice:
     image: ${REGISTRY:-webservice}:${TAG:-latest}
     ports:
@@ -44,25 +60,52 @@ services:
       DAPR_GRPC_PORT: 50001
       DAPR_METRICS_PORT: 9091
       WEATHER_SERVICE_NAME: 'dotnet-app'
+    networks:
+      - hello-dapr
 
   webservice-dapr:
     image: "daprio/daprd:latest"
+    volumes:
+      - ./components-compose:/components
     command: [
       "./daprd",
       "-app-id", "node-app",
       "-app-port", "3000",
       "-dapr-http-port", "3501",
+      "-components-path", "./components",
       "-placement-host-address", "placement:50006" # Dapr's placement service can be reach via the docker DNS entry
     ]
     network_mode: "service:webservice"
     depends_on:
       - webservice
+      - redis
 
-  dapr-placement:
+  ############################
+  # Redis state store
+  ############################
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    networks:
+      - hello-dapr
+
+  ############################
+  # Dapr placement service
+  ############################
+  placement:
     image: "daprio/dapr:latest"
     command: ["./placement", "-port", "50006"]
     ports:
       - "50006:50006"
+    networks:
+      - hello-dapr
+
+networks:
+  hello-dapr:
+    name: hello-dapr
+    external: false    
+      
 
 # dotnet dev-certs https --trust
 # cd WeatherService && dapr run --app-id dotnet-app --app-port 5000 --dapr-http-port 3501 -- dotnet run

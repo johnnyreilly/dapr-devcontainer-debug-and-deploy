@@ -15,9 +15,55 @@ param containerRegistryPassword string
 
 param tags object
 
+@secure()
+param MAIL__MAILGUNAPIKEY string
+
 param location string = resourceGroup().location
 
-var minReplicas = 0
+@description('Storage Account type')
+@allowed([
+  'Premium_LRS'
+  'Premium_ZRS'
+  'Standard_GRS'
+  'Standard_GZRS'
+  'Standard_LRS'
+  'Standard_RAGRS'
+  'Standard_RAGZRS'
+  'Standard_ZRS'
+])
+param storageAccountType string = 'Standard_LRS'
+
+@description('The name of the Storage Account')
+param storageAccountName string = 'store${uniqueString(resourceGroup().id)}'
+
+param serviceBusNamespace string = 'pubsub-namespace'
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' = {
+  name: storageAccountName
+  location: location
+  sku: {
+    name: storageAccountType
+  }
+  kind: 'StorageV2'
+  properties: {}
+}
+
+resource serviceBus 'Microsoft.ServiceBus/namespaces@2021-06-01-preview' = {
+  name: serviceBusNamespace
+  location: location
+}
+
+resource servicebus_authrule 'Microsoft.ServiceBus/namespaces/AuthorizationRules@2021-06-01-preview' existing = {
+  name: 'RootManageSharedAccessKey'
+  parent: serviceBus
+}
+
+resource topic 'Microsoft.ServiceBus/namespaces/topics@2021-06-01-preview' = {
+  name: 'weather-forecasts'
+  parent: serviceBus
+}
+
+var minReplicas = 1
 var maxReplicas = 1
 
 var branch = toLower(last(split(branchName, '/')))
@@ -29,6 +75,7 @@ var webServiceContainerAppName = '${branch}-web'
 var weatherServiceContainerAppName = '${branch}-weather'
 
 var containerRegistryPasswordRef = 'container-registry-password'
+var mailgunApiKeyRef = 'mailgun-api-key'
 
 resource workspace 'Microsoft.OperationalInsights/workspaces@2021-12-01-preview' = {
   name: workspaceName
@@ -68,11 +115,66 @@ resource environment 'Microsoft.App/managedEnvironments@2022-01-01-preview' = {
       }
     }
   }
+  resource statestoreComponent 'daprComponents@2022-03-01' = {
+    name: 'statestore'
+    properties: {
+      componentType: 'state.azure.blobstorage'
+      version: 'v1'
+      ignoreErrors: false
+      initTimeout: '5s'
+      secrets: [
+        {
+          name: 'storageaccountkey'
+          value: listKeys(resourceId('Microsoft.Storage/storageAccounts/', storageAccount.name), storageAccount.apiVersion).keys[0].value
+        }
+      ]
+      metadata: [
+        {
+          name: 'accountName'
+          value: storageAccount.name
+        }
+        {
+          name: 'containerName'
+          value: 'storage_container_name'
+        }
+        {
+          name: 'accountKey'
+          secretRef: 'storageaccountkey'
+        }
+      ]
+      scopes: [
+        weatherServiceContainerAppName
+        webServiceContainerAppName
+      ]
+    }
+  }
+  resource pubsubComponent 'daprComponents@2022-03-01' = {
+    name: 'weather-forecast-pub-sub'
+    properties: {
+      componentType: 'pubsub.azure.servicebus'
+      version: 'v1'
+      metadata: [
+        {
+          name: 'connectionString'
+          secretRef: 'sb-root-connectionstring'
+        }
+      ]
+      secrets: [
+        {
+          name: 'sb-root-connectionstring'
+          value: listKeys('${serviceBus.id}/AuthorizationRules/RootManageSharedAccessKey', serviceBus.apiVersion).primaryConnectionString
+        }
+      ]
+      scopes: [
+        weatherServiceContainerAppName
+        webServiceContainerAppName
+      ]
+    }
+  }
 }
 
 resource weatherServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
   name: weatherServiceContainerAppName
-  kind: 'containerapps'
   tags: tags
   location: location
   properties: {
@@ -87,6 +189,10 @@ resource weatherServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-prev
         {
           name: containerRegistryPasswordRef
           value: containerRegistryPassword
+        }
+        {
+          name: mailgunApiKeyRef
+          value: MAIL__MAILGUNAPIKEY
         }
       ]
       registries: [
@@ -106,7 +212,12 @@ resource weatherServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-prev
         {
           image: weatherServiceImage
           name: weatherServiceContainerAppName
-          transport: 'auto'
+          env: [
+            {
+              name: 'MAIL__MAILGUNAPIKEY'
+              secretRef: mailgunApiKeyRef
+            }
+          ]
         }
       ]
       scale: {
@@ -119,7 +230,6 @@ resource weatherServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-prev
 
 resource webServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
   name: webServiceContainerAppName
-  kind: 'containerapps'
   tags: tags
   location: location
   properties: {
@@ -153,7 +263,6 @@ resource webServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-preview'
         {
           image: webServiceImage
           name: webServiceContainerAppName
-          transport: 'auto'
           env: [
             {
               name: 'WEATHER_SERVICE_NAME'
