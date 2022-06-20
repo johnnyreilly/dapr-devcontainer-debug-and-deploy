@@ -63,7 +63,7 @@ resource topic 'Microsoft.ServiceBus/namespaces/topics@2021-06-01-preview' = {
   parent: serviceBus
 }
 
-var minReplicas = 0
+var minReplicas = 1
 var maxReplicas = 1
 
 var branch = toLower(last(split(branchName, '/')))
