@@ -170,23 +170,6 @@ resource environment 'Microsoft.App/managedEnvironments@2022-01-01-preview' = {
         webServiceContainerAppName
       ]
     }
-  }
-  // resource subscriptionComponent 'daprComponents@2022-03-01' = {
-  //   name: 'weather-forecast-subcription'
-  //   properties: {
-  //     componentType: 'pubsub.azure.servicebus'
-  //     version: 'v1'
-  //     spec: {
-  //       topic: 'weather-forecasts'
-  //       route: '/SendWeatherForecast'
-  //       pubsubname: 'weather-forecast-pub-sub'
-  //     }
-  //     scopes: [
-  //       weatherServiceContainerAppName
-  //       webServiceContainerAppName
-  //     ]
-  //   }
-  // }
 }
 
 resource weatherServiceContainerApp 'Microsoft.App/containerApps@2022-01-01-preview' = {
