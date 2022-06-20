@@ -21,6 +21,7 @@ public static class WeatherForecastEndpoints
     public static IEndpointRouteBuilder MapWeatherForecastEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost("/SendWeatherForecast",
+            // Dapr subscription in [Topic] routes weather-forecasts topic to this route
             [Topic("weather-forecast-pub-sub", "weather-forecasts")]
             async (
                 SendWeatherForecastBody body,
